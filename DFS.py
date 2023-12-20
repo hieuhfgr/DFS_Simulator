@@ -1,4 +1,5 @@
-import tkinter as tk
+import tkinter as tk 
+from tkinter import Button
 from random import randint
 from time import sleep
 import threading
@@ -10,8 +11,8 @@ class DFS_Simulator:
 		self.master.configure(bg='#1E1E1E') 
 		self.canvas = tk.Canvas(self.master, width=1200, height=700, bg='#1E1E1E', highlightthickness=0)
 		self.canvas.pack()
-		self.canvas.create_text(900, 50, text=f"DFS Simulator - Created by @hieuhfgr", fill='#ffffff', font=('Helvetica', 20))
-		self.MAXN = MAXN + 5
+		self.InitCanvas()
+		self.MAXN = MAXN
 		self.file = "DFS"
 		self.adj = []
 		self.height = []
@@ -24,16 +25,20 @@ class DFS_Simulator:
 		self.colorOff ='#3498db'
 		self.sleepTime = 0.1
 
+		self.InitButtons()
+
 	def gen(self, MAXN):
-		self.MAXN = MAXN
+		self.MAXN = MAXN+1
 		with open(f"{self.file}.INP", "w") as f:
 			for i in range(1, MAXN):
-				f.write(f"{max(randint(i-3, i-1), 1)} {i+1}\n")
-		print("Done Gen")
-		self.readFile()
+				f.write(f"{max(randint(i-5, i-1), 1)} {i+1}\n")
+		print("Generated a Tree")
+		# self.readFile()
 
 	def readFile(self):
+		self.MAXN=500+1
 		self.updateAdj()
+		self.MAXN=1
 		self.DFSInit(1, 0)
 		for node in range(1, self.MAXN):
 			self.draw_node(node)
@@ -56,8 +61,9 @@ class DFS_Simulator:
 				line = f.readline()
 	
 	def DFSInit(self, u, par):
-		self.height[u] = self.height[par]+1;
-		self.parent[u] = par;
+		self.height[u] = self.height[par]+1
+		self.parent[u] = par
+		self.MAXN = max(self.MAXN, u+1)
 		for v in self.adj[u]:
 			if (v == par): continue
 			self.DFSInit(v, u)
@@ -83,13 +89,13 @@ class DFS_Simulator:
 		self.change_node_color(u, self.colorOff)
 
 	def draw_node(self, node):
-		sz = 15
-		node_radius = sz
+		nodeSZ = 20
+		node_radius = nodeSZ
 		self.cntheight[self.height[node]] += 1
-		x, y = self.cntheight[self.height[node]]*100, self.height[node]*50
+		x, y = self.cntheight[self.height[node]]*50, self.height[node]*50
 		self.pos[node] = [x, y]
 		self.nodes[node] = self.canvas.create_oval(x - node_radius, y - node_radius, x + node_radius, y + node_radius, fill=self.colorOff, outline='#2c3e50')
-		self.canvas.create_text(x, y, text=f"{node}", fill='#000000', font=('Helvetica', sz))
+		self.canvas.create_text(x, y, text=f"{node}", fill='#000000', font=('Helvetica', nodeSZ))
 
 		if self.parent[node] != 0:
 			parent_x, parent_y = self.pos[self.parent[node]] 
@@ -101,18 +107,44 @@ class DFS_Simulator:
 		self.canvas.itemconfig(node_id, fill=color)
 		
 	def startSimulate(self, root):
+		self.canvas.itemconfig(self.DFSText, text="Start DFS")
 		sleep(1)
-		meh = self.canvas.create_text(900, 100, text=f"Start DFS", fill='#ffffff', font=('Helvetica', 20))
 		self.dfs(root, 0)
-		self.canvas.itemconfig(meh, text="Done DFS")
+		self.canvas.itemconfig(self.DFSText, text="Done DFS")
+
+	def handleRunDFS(self):
+		dfs_thread_instance = threading.Thread(target=self.startSimulate, args=(1,))
+		dfs_thread_instance.start()
+	
+	def handleGenTree(self):
+		self.gen(25)
+
+	def handleDrawTree(self):
+		self.canvas.delete("all")
+		self.InitCanvas()
+		self.readFile()
+	
+	def handleGenAndDraw(self):
+		self.handleGenTree()
+		self.handleDrawTree()
+
+	def InitButtons(self):
+		_1 = Button(self.master, text ="Generate Tree", command=self.handleGenTree)
+		_1.place(x=900,y=200)
+		_2 = Button(self.master, text ="Draw Tree", command=self.handleDrawTree)
+		_2.place(x=900,y=200+50)
+		_3 = Button(self.master, text= "Start DFS", command=self.handleRunDFS) 
+		_3.place(x=900,y=200+100)
+		_4 = Button(self.master, text ="Generate And Draw Tree", command=self.handleGenAndDraw)
+		_4.place(x=1000,y=200)
+
+	def InitCanvas(self):
+		self.canvas.create_text(900, 50, text=f"DFS Simulator - Created by @hieuhfgr", fill='#ffffff', font=('Helvetica', 20))
+		self.DFSText = self.canvas.create_text(900, 200+150, text=f"", fill='#ffffff', font=('Helvetica', 15))
 
 def main():
 	root = tk.Tk()
-	meh = DFS_Simulator(root, 50)
-	meh.gen(30)
-	# meh.check()
-	dfs_thread_instance = threading.Thread(target=meh.startSimulate, args=(1,))
-	dfs_thread_instance.start()
+	meh = DFS_Simulator(root, 25)
 	root.mainloop()
 
 if __name__ == "__main__":
